@@ -2,6 +2,10 @@
 
 A simple BASH script for building, publishing, and running Docker containers. The `dimg` script uses a self-describing YAML file, the `container.yaml`, to help flesh out the execution of `docker` from a single source of information.
 
+## Installing
+
+Just put the `dimg` script in your path. Nothing fancy.
+
 ## The container.yaml file and Dockerfile
 
 The `dimg` script is ideal for quickly prototyping docker containers locally with a parameterized `Dockerfile` and a simple `container.yaml` file.
