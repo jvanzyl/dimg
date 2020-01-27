@@ -190,6 +190,7 @@ bash-3.2$ ./dimg-tests-runner
  ✓ Run docker container with shell using container.yaml
  ✓ Delete docker container with shell using container.yaml
  ✓ Push docker container using container-with-registry.yaml
+ ✓ Publish docker container using container-with-maven-version.yaml
 
-8 tests, 0 failures
+9 tests, 0 failures
 ```
