@@ -119,7 +119,7 @@ Also note that the mounts you have specified in your `container.yaml` file will 
 
 ### Running with a shell
 
-Often you will want to just shell into a container to see if the structure is as you expect or you're debugging something. Note that the shell specified in your `container.yaml` is the shell started up when you run the container.
+Often you will want to just shell into a container to see if the structure is as you expect or you're debugging something. Note that the shell specified in your `container.yaml` is the shell started up when you run the container. Note that the mounts specified are handled the same way as above.
 
 `dimg -rs`
 
