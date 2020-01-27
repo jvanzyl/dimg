@@ -1,0 +1,266 @@
+#!/usr/bin/env bash
+
+# ------------------------------------------------------------------------------
+# Shell script that reads in a YAML configuration, container.yaml, and helps
+# build, publish and delete images, as well and run them as containers.
+#
+# repository: jvanzyl
+# image: cci-maven
+# version: 0.0.6
+# buildArgs:
+#  user: concord
+#  uid: 456
+# run:
+#  shell: /bin/bash
+#  mount: "$HOME/.m2/repository":"/repo"
+# ------------------------------------------------------------------------------
+
+function parse_yaml {
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+      }
+   }'
+}
+
+function mavenProjectVersion() {
+  # $1 = pom.xml
+
+  # Strip all the whitespace out of the pom.xml
+  pom=`cat $1 | tr -d " \t\n\r"`
+
+  # If a parent element exists extract the specified version for possible use
+  if grep -q '<parent>' <<< $pom; then
+    parentVersion=`echo $pom | \
+      sed -n "s@\(.*\)\(<parent>.*</parent>\)\(.*\)@\2@p" | \
+      sed -n "s@\(.*<version>\)\(.*\)\(</version>\)\(.*\)@\2@p"`
+  fi
+
+  # Strip out all blocks that may contain <version/> tags which will only
+  # leave the project version if it's present
+  version=`echo $pom | \
+    sed -e 's@<profiles>.*</profiles>@@' | \
+    sed -e 's@<dependencies>.*</dependencies>@@' | \
+    sed -e 's@<build>.*</build>@@' | \
+    sed -e 's@<parent>.*</parent>@@' | \
+    sed -n "s@\(.*<version>\)\(.*\)\(.*</version>\)\(.*\)@\2@p"`
+
+  # If the project version is present use it, otherwise use the parent version
+  # and we assume we have a valid POM with a version or parent/version
+  [ ! -z "${version}" ] && echo $version || echo $parentVersion
+}
+
+function cmd() {
+  basename $0
+}
+
+function usage() {
+  echo "\
+`cmd` [OPTIONS...]
+-h, --help; Show help
+-f, --file; Use the specified container yaml file (default: container.yaml)
+-s, --show; Show variables to be used for docker image
+-b, --build; Build docker image (default if no other command specified)
+-p, --publish; Publish docker image
+-r, --run; Run docker image
+-rs, --shell; Run docker image with shell
+-d, --delete; Delete docker image
+-t, --test; Test mode: Only display the command that will be executed
+" | column -t -s ";"
+}
+
+options=$(getopt -o b:r:p:d:f --long build:,run:,publish:,delete,file: -n 'parse-options' -- "$@")
+
+if [ $? != 0 ]; then
+  echo "Failed parsing options." >&2
+  exit 1
+fi
+
+while true; do
+  case "$1" in
+    -h | --help) usage; exit;;
+    -s | --show) action=show; shift 1;;
+    -b | --build ) action=build; shift 1 ;;
+    -p | --publish ) action=publish; shift 1 ;;
+    -r | --run ) action=run; shift 1 ;;
+    -d | --delete) action=delete; shift 1 ;;
+    -rs| --shell) action=shell; shift 1;;
+    -f | --file) file=$2; shift 2;;
+    -t | --test) testMode="true"; shift 1;;
+    -- ) shift; break ;;
+    "" ) break ;;
+    * ) echo "Unknown option provided ${1}"; usage; exit 1; ;;
+  esac
+done
+
+[ -z "${action}" ] && action=build
+[ -z "${file}" ] && file=container.yaml
+[ ! -f ${file} ] && echo && echo "The specified container file ${file} doesn't exist." && echo && exit
+
+# Support for the {{maven.version}} expression for the version. We execute
+# Maven to get the version of the project according to Maven's rules
+if grep -q '{{maven.version}}' container.yaml
+then
+  mkdir -p /tmp/img 2>&1 > /dev/null
+  yaml=/tmp/img/container.yaml.$(date +%Y%m%d%S)
+  #version=$(mvn --quiet help:evaluate -Dexpression=project.version -DforceStdout)
+  version=$(mavenProjectVersion pom.xml)
+  sed -e "s/{{maven.version}}/${version}/g" $file > $yaml
+else
+  yaml=$file
+fi
+
+if [ "${action}" == "show"  ]
+then
+  parse_yaml $yaml
+  exit
+fi
+
+eval $(parse_yaml $yaml)
+eval 'buildArgsList=(${!'"buildArgs_"'@})'
+
+[ ! -z "${registry}" ] && echo "registry: ${registry}"
+echo "repository: ${repository}"
+echo "image: ${image}"
+echo "version: ${version}"
+echo
+echo "Build-args:"
+for i in "${buildArgsList[@]}"
+do
+   buildArgKey=`echo ${i} | sed 's/buildArgs_//'`
+   buildArgValue=${!i}
+   buildArgs="--build-arg ${buildArgKey}=${buildArgValue} ${buildArgs}"
+   echo "  ${buildArgKey}: ${buildArgValue}"
+done
+
+echo
+
+if [ "${action}" == "build"  ]
+then
+  if [ ! -z "${registry}" ]
+  then
+    command="docker build \
+      ${buildArgs} \
+      -t ${registry}/${repository}/${image}:latest \
+      -t ${registry}/${repository}/${image}:${version} ."
+  else
+    command="docker build \
+      ${buildArgs} \
+      -t ${repository}/${image}:latest \
+      -t ${repository}/${image}:${version} ."
+  fi
+
+  if [ "${testMode}" == "true" ]; then
+    echo $command
+  else
+    $command
+  fi
+fi
+
+if [ "${action}" == "publish"  ]
+then
+  if [ ! -z "${registry}" ]
+  then
+    commandLatest="docker push ${registry}/${repository}/${image}:latest"
+    commandVersion="docker push ${registry}/${repository}/${image}:${version}"
+  else
+    commandLatest="docker push ${repository}/${image}:latest"
+    commandVersion="docker push ${repository}/${image}:${version}"
+  fi
+
+  if [ "${testMode}" == "true" ]; then
+    echo $commandLatest
+    echo $commandVersion
+  else
+    $commandLatest
+    $commandVersion
+  fi
+fi
+
+if [ "${action}" == "run"  ]
+then
+  [ ! -z "${run_mount}" ] && mount="-v ${run_mount}"
+
+  eval 'mountList=(${!'"run_mounts_"'@})'
+  for i in "${mountList[@]}"
+  do
+     mountPair=${!i}
+     mountArgs="-v ${mountPair} ${mountArgs}"
+  done
+
+  eval 'envList=(${!'"run_env_"'@})'
+  for i in "${envList[@]}"
+  do
+     envKey=`echo ${i} | sed 's/run_env_//'`
+     envValue=${!i}
+     envArgs="-e ${envKey}=${envValue} ${envArgs}"
+  done
+
+    command="docker run \
+      ${mountArgs} \
+      --net=host \
+      -e DOCKER_HOST=tcp://localhost:2375 \
+      ${envArgs} \
+      --rm ${repository}/${image}:latest"
+
+    if [ "${testMode}" == "true" ]; then
+      echo $command
+    else
+      $command
+    fi
+fi
+
+
+if [ "${action}" == "shell"  ]
+then
+  [ ! -z "${run_mount}" ] && mount="-v ${run_mount}"
+
+  eval 'mountList=(${!'"run_mounts_"'@})'
+  for i in "${mountList[@]}"
+  do
+     mountPair=${!i}
+     mountArgs="-v ${mountPair} ${mountArgs}"
+  done
+
+  eval 'envList=(${!'"run_env_"'@})'
+  for i in "${envList[@]}"
+  do
+     envKey=`echo ${i} | sed 's/run_env_//'`
+     envValue=${!i}
+     envArgs="-e ${envKey}=${envValue} ${envArgs}"
+  done
+
+  command="docker run \
+    ${mountArgs} \
+    --net=host \
+    -e DOCKER_HOST=tcp://localhost:2375 \
+    ${envArgs} \
+    -it --rm ${repository}/${image}:latest \
+    ${run_shell}"
+
+    if [ "${testMode}" == "true" ]; then
+      echo $command
+    else
+      $command
+    fi
+fi
+
+if [ "${action}" == "delete"  ]
+then
+  command="docker image rm ${repository}/${image}"
+
+  if [ "${testMode}" == "true" ]; then
+    echo $command
+  else
+    $command
+  fi
+fi

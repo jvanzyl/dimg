@@ -1,0 +1,10 @@
+repository: jvanzyl
+image: concord-alpine
+version: 0.0.4
+buildArgs:
+  user: concord
+  uid: 456
+  group: concord
+  gid: 456
+run:
+  shell: /bin/sh

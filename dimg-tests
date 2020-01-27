@@ -1,0 +1,114 @@
+@test "Display help for the dimg command" {
+  run ./dimg -h
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "dimg [OPTIONS...]" ]
+  [ "${lines[1]}" = "-h, --help          Show help" ]
+  [ "${lines[2]}" = "-f, --file          Use the specified container yaml file (default: container.yaml)" ]
+  [ "${lines[3]}" = "-s, --show          Show variables to be used for docker image" ]
+  [ "${lines[4]}" = "-b, --build         Build docker image (default if no other command specified)" ]
+  [ "${lines[5]}" = "-p, --publish       Publish docker image" ]
+  [ "${lines[6]}" = "-r, --run           Run docker image" ]
+  [ "${lines[7]}" = "-rs, --shell        Run docker image with shell" ]
+  [ "${lines[8]}" = "-d, --delete        Delete docker image" ]
+  [ "${lines[9]}" = "-t, --test          Test mode: Only display the command that will be executed" ]
+}
+
+@test "Show the variables that will be used to build the container" {
+  run ./dimg -s
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository=\"jvanzyl\"" ]
+  [ "${lines[1]}" = "image=\"concord-alpine\"" ]
+  [ "${lines[2]}" = "version=\"0.0.4\"" ]
+  [ "${lines[3]}" = "buildArgs_user=\"concord\"" ]
+  [ "${lines[4]}" = "buildArgs_uid=\"456\"" ]
+  [ "${lines[5]}" = "buildArgs_group=\"concord\"" ]
+  [ "${lines[6]}" = "buildArgs_gid=\"456\"" ]
+  [ "${lines[7]}" = "run_shell=\"/bin/sh\"" ]
+}
+
+@test "Build docker container using container.yaml" {
+  run ./dimg --build --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository: jvanzyl" ]
+  [ "${lines[1]}" = "image: concord-alpine" ]
+  [ "${lines[2]}" = "version: 0.0.4" ]
+  [ "${lines[3]}" = "Build-args:" ]
+  [ "${lines[4]}" = "  gid: 456" ]
+  [ "${lines[5]}" = "  group: concord" ]
+  [ "${lines[6]}" = "  uid: 456" ]
+  [ "${lines[7]}" = "  user: concord" ]
+  [ "${lines[8]}" = "docker build --build-arg user=concord --build-arg uid=456 --build-arg group=concord --build-arg gid=456 -t jvanzyl/concord-alpine:latest -t jvanzyl/concord-alpine:0.0.4 ." ]
+}
+
+@test "Publish docker container using container.yaml" {
+  run ./dimg --publish --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository: jvanzyl" ]
+  [ "${lines[1]}" = "image: concord-alpine" ]
+  [ "${lines[2]}" = "version: 0.0.4" ]
+  [ "${lines[3]}" = "Build-args:" ]
+  [ "${lines[4]}" = "  gid: 456" ]
+  [ "${lines[5]}" = "  group: concord" ]
+  [ "${lines[6]}" = "  uid: 456" ]
+  [ "${lines[7]}" = "  user: concord" ]
+  [ "${lines[8]}" = "docker push jvanzyl/concord-alpine:latest" ]
+  [ "${lines[9]}" = "docker push jvanzyl/concord-alpine:0.0.4" ]
+}
+
+@test "Run docker container using container.yaml" {
+  run ./dimg --run --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository: jvanzyl" ]
+  [ "${lines[1]}" = "image: concord-alpine" ]
+  [ "${lines[2]}" = "version: 0.0.4" ]
+  [ "${lines[3]}" = "Build-args:" ]
+  [ "${lines[4]}" = "  gid: 456" ]
+  [ "${lines[5]}" = "  group: concord" ]
+  [ "${lines[6]}" = "  uid: 456" ]
+  [ "${lines[7]}" = "  user: concord" ]
+  [ "${lines[8]}" = "docker run --net=host -e DOCKER_HOST=tcp://localhost:2375 --rm jvanzyl/concord-alpine:latest" ]
+}
+
+@test "Run docker container with shell using container.yaml" {
+  run ./dimg --shell --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository: jvanzyl" ]
+  [ "${lines[1]}" = "image: concord-alpine" ]
+  [ "${lines[2]}" = "version: 0.0.4" ]
+  [ "${lines[3]}" = "Build-args:" ]
+  [ "${lines[4]}" = "  gid: 456" ]
+  [ "${lines[5]}" = "  group: concord" ]
+  [ "${lines[6]}" = "  uid: 456" ]
+  [ "${lines[7]}" = "  user: concord" ]
+  [ "${lines[8]}" = "docker run --net=host -e DOCKER_HOST=tcp://localhost:2375 -it --rm jvanzyl/concord-alpine:latest /bin/sh" ]
+}
+
+@test "Delete docker container with shell using container.yaml" {
+  run ./dimg --delete --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository: jvanzyl" ]
+  [ "${lines[1]}" = "image: concord-alpine" ]
+  [ "${lines[2]}" = "version: 0.0.4" ]
+  [ "${lines[3]}" = "Build-args:" ]
+  [ "${lines[4]}" = "  gid: 456" ]
+  [ "${lines[5]}" = "  group: concord" ]
+  [ "${lines[6]}" = "  uid: 456" ]
+  [ "${lines[7]}" = "  user: concord" ]
+  [ "${lines[8]}" = "docker image rm jvanzyl/concord-alpine" ]
+}
+
+@test "Push docker container using container-with-registry.yaml" {
+  run ./dimg --file container-with-registry.yaml --publish --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "registry: registry.vanzyl.ca" ]
+  [ "${lines[1]}" = "repository: jvanzyl" ]
+  [ "${lines[2]}" = "image: concord-alpine" ]
+  [ "${lines[3]}" = "version: 0.0.4" ]
+  [ "${lines[4]}" = "Build-args:" ]
+  [ "${lines[5]}" = "  gid: 456" ]
+  [ "${lines[6]}" = "  group: concord" ]
+  [ "${lines[7]}" = "  uid: 456" ]
+  [ "${lines[8]}" = "  user: concord" ]
+  [ "${lines[9]}" = "docker push registry.vanzyl.ca/jvanzyl/concord-alpine:latest" ]
+  [ "${lines[10]}" = "docker push registry.vanzyl.ca/jvanzyl/concord-alpine:0.0.4" ]
+}
