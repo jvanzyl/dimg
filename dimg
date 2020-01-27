@@ -108,7 +108,7 @@ done
 
 # Support for the {{maven.version}} expression for the version. We execute
 # Maven to get the version of the project according to Maven's rules
-if grep -q '{{maven.version}}' container.yaml
+if grep -q '{{maven.version}}' $file
 then
   mkdir -p /tmp/img 2>&1 > /dev/null
   yaml=/tmp/img/container.yaml.$(date +%Y%m%d%S)

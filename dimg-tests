@@ -112,3 +112,18 @@
   [ "${lines[9]}" = "docker push registry.vanzyl.ca/jvanzyl/concord-alpine:latest" ]
   [ "${lines[10]}" = "docker push registry.vanzyl.ca/jvanzyl/concord-alpine:0.0.4" ]
 }
+
+@test "Publish docker container using container-with-maven-version.yaml" {
+  run ./dimg --publish --test --file container-with-maven-version.yaml
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository: jvanzyl" ]
+  [ "${lines[1]}" = "image: concord-alpine" ]
+  [ "${lines[2]}" = "version: 1.0.0" ]
+  [ "${lines[3]}" = "Build-args:" ]
+  [ "${lines[4]}" = "  gid: 456" ]
+  [ "${lines[5]}" = "  group: concord" ]
+  [ "${lines[6]}" = "  uid: 456" ]
+  [ "${lines[7]}" = "  user: concord" ]
+  [ "${lines[8]}" = "docker push jvanzyl/concord-alpine:latest" ]
+  [ "${lines[9]}" = "docker push jvanzyl/concord-alpine:1.0.0" ]
+}

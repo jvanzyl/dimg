@@ -123,6 +123,57 @@ Often you will want to just shell into a container to see if the structure is as
 
 `dimg -rs`
 
+
+## Support for Maven POMs
+
+If you normally use a Maven project for building your docker containers but want to use `dimg` for hacking around, you cna have the version extracted from the `pom.xml` file in the local directory using `{{maven.version}}` in your `container.yaml` file. So you may have a `pom.xml` file like the following:
+
+```
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>ca.vanzyl</groupId>
+  <artifactId>concord-alpine</artifactId>
+  <version>1.0.0</version>
+</project>
+```
+
+And a `container.yaml` like the following:
+
+```
+repository: jvanzyl
+image: concord-alpine
+version: {{maven.version}}
+buildArgs:
+  user: concord
+  uid: 456
+  group: concord
+  gid: 456
+run:
+  shell: /bin/sh
+```
+
+If you run `dimg -p -t` you will see the following:
+
+```
+repository: jvanzyl
+image: concord-alpine
+version: 1.0.0
+
+Build-args:
+  gid: 456
+  group: concord
+  uid: 456
+  user: concord
+
+docker push jvanzyl/concord-alpine:latest
+docker push jvanzyl/concord-alpine:1.0.0
+```
+
+Where the version has been extracted from the `pom.xml` file.
+
+NOTE: The Maven project version is extracted using [mpv](https://github.com/jvanzyl/mpv).
+
+
 ## Running Tests
 
 If you want run the tests you need to install [BATS](https://github.com/bats-core/bats-core). BATS is a testing tool for BASH scripts/functions.
