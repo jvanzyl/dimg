@@ -66,7 +66,7 @@
   [ "${lines[5]}" = "  group: concord" ]
   [ "${lines[6]}" = "  uid: 456" ]
   [ "${lines[7]}" = "  user: concord" ]
-  [ "${lines[8]}" = "docker run -e DOCKER_HOST=tcp://localhost:2375 --rm jvanzyl/concord-alpine:latest" ]
+  [ "${lines[8]}" = "docker run --rm jvanzyl/concord-alpine:latest" ]
 }
 
 @test "Run docker container using container-with-network.yaml" {
@@ -80,7 +80,21 @@
   [ "${lines[5]}" = "  group: concord" ]
   [ "${lines[6]}" = "  uid: 456" ]
   [ "${lines[7]}" = "  user: concord" ]
-  [ "${lines[8]}" = "docker run --network=host -e DOCKER_HOST=tcp://localhost:2375 --rm jvanzyl/concord-alpine:latest" ]
+  [ "${lines[8]}" = "docker run --network=host --rm jvanzyl/concord-alpine:latest" ]
+}
+
+@test "Run docker container using container-with-host.yaml" {
+  run ./dimg --file container-with-host.yaml --run --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository: jvanzyl" ]
+  [ "${lines[1]}" = "image: concord-alpine" ]
+  [ "${lines[2]}" = "version: 0.0.4" ]
+  [ "${lines[3]}" = "Build-args:" ]
+  [ "${lines[4]}" = "  gid: 456" ]
+  [ "${lines[5]}" = "  group: concord" ]
+  [ "${lines[6]}" = "  uid: 456" ]
+  [ "${lines[7]}" = "  user: concord" ]
+  [ "${lines[8]}" = "docker run -e DOCKER_HOST=tcp://localhost:2375 --rm jvanzyl/concord-alpine:latest" ]
 }
 
 @test "Run docker container with shell using container.yaml" {
@@ -94,7 +108,7 @@
   [ "${lines[5]}" = "  group: concord" ]
   [ "${lines[6]}" = "  uid: 456" ]
   [ "${lines[7]}" = "  user: concord" ]
-  [ "${lines[8]}" = "docker run -e DOCKER_HOST=tcp://localhost:2375 -it --rm jvanzyl/concord-alpine:latest /bin/sh" ]
+  [ "${lines[8]}" = "docker run -it --rm jvanzyl/concord-alpine:latest /bin/sh" ]
 }
 
 @test "Delete docker container using container.yaml" {
