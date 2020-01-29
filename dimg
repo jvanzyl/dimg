@@ -190,6 +190,8 @@ if [ "${action}" == "run"  ]
 then
   [ ! -z "${run_mount}" ] && mount="-v ${run_mount}"
 
+  [ ! -z "${run_network}" ] && network="--network=${run_network}"
+
   eval 'mountList=(${!'"run_mounts_"'@})'
   for i in "${mountList[@]}"
   do
@@ -207,7 +209,7 @@ then
 
     command="docker run \
       ${mountArgs} \
-      --net=host \
+      ${network} \
       -e DOCKER_HOST=tcp://localhost:2375 \
       ${envArgs} \
       --rm ${repository}/${image}:latest"
@@ -223,6 +225,8 @@ fi
 if [ "${action}" == "shell"  ]
 then
   [ ! -z "${run_mount}" ] && mount="-v ${run_mount}"
+
+  [ ! -z "${run_network}" ] && network="--network=${run_network}"
 
   eval 'mountList=(${!'"run_mounts_"'@})'
   for i in "${mountList[@]}"
@@ -241,7 +245,7 @@ then
 
   command="docker run \
     ${mountArgs} \
-    --net=host \
+    ${network} \
     -e DOCKER_HOST=tcp://localhost:2375 \
     ${envArgs} \
     -it --rm ${repository}/${image}:latest \
