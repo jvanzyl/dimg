@@ -68,7 +68,7 @@ dimg [OPTIONS...]
 -r, --run           Run docker image
 -rs, --shell        Run docker image with shell
 -d, --delete        Delete docker image
--t, --test          Test mode: Only display the command that will be executed 
+-t, --test          Test mode: Only display the command that will be executed
 ```
 
 The most convenient way to see what command will be executed, without the command actually being executed, is by using the `--test` option. If you wanted to see what configuration and `docker` command will be generated for publishing you would do the following:
@@ -187,10 +187,12 @@ bash-3.2$ ./dimg-tests-runner
  ✓ Build docker container using container.yaml
  ✓ Publish docker container using container.yaml
  ✓ Run docker container using container.yaml
+ ✓ Run docker container using container-with-network.yaml
+ ✓ Run docker container using container-with-host.yaml
  ✓ Run docker container with shell using container.yaml
- ✓ Delete docker container with shell using container.yaml
+ ✓ Delete docker container using container.yaml
  ✓ Push docker container using container-with-registry.yaml
  ✓ Publish docker container using container-with-maven-version.yaml
 
-9 tests, 0 failures
+11 tests, 0 failures
 ```
