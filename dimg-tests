@@ -97,7 +97,7 @@
   [ "${lines[8]}" = "docker run -e DOCKER_HOST=tcp://localhost:2375 -it --rm jvanzyl/concord-alpine:latest /bin/sh" ]
 }
 
-@test "Delete docker container with shell using container.yaml" {
+@test "Delete docker container using container.yaml" {
   run ./dimg --delete --test
   [ "$status" -eq 0 ]
   [ "${lines[0]}" = "repository: jvanzyl" ]
