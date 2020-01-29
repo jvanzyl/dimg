@@ -187,6 +187,7 @@ bash-3.2$ ./dimg-tests-runner
  ✓ Build docker container using container.yaml
  ✓ Publish docker container using container.yaml
  ✓ Run docker container using container.yaml
+ ✓ Run docker container using container-with-ports.yaml
  ✓ Run docker container using container-with-network.yaml
  ✓ Run docker container using container-with-host.yaml
  ✓ Run docker container with shell using container.yaml
@@ -194,5 +195,5 @@ bash-3.2$ ./dimg-tests-runner
  ✓ Push docker container using container-with-registry.yaml
  ✓ Publish docker container using container-with-maven-version.yaml
 
-11 tests, 0 failures
+12 tests, 0 failures
 ```

@@ -190,6 +190,8 @@ if [ "${action}" == "run"  ]
 then
   [ ! -z "${run_mount}" ] && mount="-v ${run_mount}"
 
+  [ ! -z "${run_ports}" ] && ports="-p ${run_ports}"
+
   [ ! -z "${run_network}" ] && network="--network=${run_network}"
 
   [ ! -z "${run_host}" ] && host="-e DOCKER_HOST=${run_host}"
@@ -210,6 +212,7 @@ then
   done
 
     command="docker run \
+      ${ports} \
       ${mountArgs} \
       ${network} \
       ${host} \
@@ -227,6 +230,8 @@ fi
 if [ "${action}" == "shell"  ]
 then
   [ ! -z "${run_mount}" ] && mount="-v ${run_mount}"
+
+  [ ! -z "${run_ports}" ] && ports="-p ${run_ports}"
 
   [ ! -z "${run_network}" ] && network="--network=${run_network}"
 
@@ -248,6 +253,7 @@ then
   done
 
   command="docker run \
+    ${ports} \
     ${mountArgs} \
     ${network} \
     ${host} \
