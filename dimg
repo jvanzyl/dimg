@@ -94,7 +94,7 @@ while true; do
     -r | --run ) action=run; shift 1 ;;
     -d | --delete) action=delete; shift 1 ;;
     -rs| --shell) action=shell; shift 1;;
-    -f | --file) file=$2; shift 2;;
+    -f | --file) containerfile=$2; shift 2;;
     -t | --test) testMode="true"; shift 1;;
     -- ) shift; break ;;
     "" ) break ;;
@@ -103,20 +103,20 @@ while true; do
 done
 
 [ -z "${action}" ] && action=build
-[ -z "${file}" ] && file=container.yaml
-[ ! -f ${file} ] && echo && echo "The specified container file ${file} doesn't exist." && echo && exit
+[ -z "${containerfile}" ] && containerfile=container.yaml
+[ ! -f ${containerfile} ] && echo && echo "The specified container file ${containerfile} doesn't exist." && echo && exit
 
 # Support for the {{maven.version}} expression for the version. We execute
 # Maven to get the version of the project according to Maven's rules
-if grep -q '{{maven.version}}' $file
+if grep -q '{{maven.version}}' $containerfile
 then
   mkdir -p /tmp/img 2>&1 > /dev/null
   yaml=/tmp/img/container.yaml.$(date +%Y%m%d%S)
   #version=$(mvn --quiet help:evaluate -Dexpression=project.version -DforceStdout)
   version=$(mavenProjectVersion pom.xml)
-  sed -e "s/{{maven.version}}/${version}/g" $file > $yaml
+  sed -e "s/{{maven.version}}/${version}/g" $containerfile > $yaml
 else
-  yaml=$file
+  yaml=$containerfile
 fi
 
 if [ "${action}" == "show"  ]
@@ -128,6 +128,7 @@ fi
 eval $(parse_yaml $yaml)
 eval 'buildArgsList=(${!'"buildArgs_"'@})'
 
+[ ! -z "${file}" ] && echo "file: ${file}"
 [ ! -z "${registry}" ] && echo "registry: ${registry}"
 echo "repository: ${repository}"
 echo "image: ${image}"
@@ -146,15 +147,21 @@ echo
 
 if [ "${action}" == "build"  ]
 then
+
+  command="docker build ${buildArgs}"
+
+  if [ ! -z "${file}" ]
+  then
+    command="${command} -f ${file}"
+  fi
+
   if [ ! -z "${registry}" ]
   then
-    command="docker build \
-      ${buildArgs} \
+    command="${command} \
       -t ${registry}/${repository}/${image}:latest \
       -t ${registry}/${repository}/${image}:${version} ."
   else
-    command="docker build \
-      ${buildArgs} \
+    command="${command} \
       -t ${repository}/${image}:latest \
       -t ${repository}/${image}:${version} ."
   fi
@@ -168,6 +175,7 @@ fi
 
 if [ "${action}" == "publish"  ]
 then
+
   if [ ! -z "${registry}" ]
   then
     commandLatest="docker push ${registry}/${repository}/${image}:latest"
@@ -208,13 +216,13 @@ then
      envArgs="-e ${envKey}=${envValue} ${envArgs}"
   done
 
-    command="docker run \
-      ${ports} \
-      ${mountArgs} \
-      ${network} \
-      ${host} \
-      ${envArgs} \
-      --rm ${repository}/${image}:latest"
+  command="docker run \
+    ${ports} \
+    ${mountArgs} \
+    ${network} \
+    ${host} \
+    ${envArgs} \
+    --rm ${repository}/${image}:latest"
 
     if [ "${testMode}" == "true" ]; then
       echo $command

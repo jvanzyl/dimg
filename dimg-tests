@@ -169,3 +169,19 @@
   [ "${lines[8]}" = "docker push jvanzyl/concord-alpine:latest" ]
   [ "${lines[9]}" = "docker push jvanzyl/concord-alpine:1.0.0" ]
 }
+
+@test "Build docker container using container-with-dockerfile.yaml" {
+  run ./dimg --file container-with-dockerfile.yaml --build --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "file: Dockerfile.distroless-java11" ]
+  [ "${lines[1]}" = "registry: registry.vanzyl.ca" ]
+  [ "${lines[2]}" = "repository: jvanzyl" ]
+  [ "${lines[3]}" = "image: concord-alpine" ]
+  [ "${lines[4]}" = "version: 0.0.4" ]
+  [ "${lines[5]}" = "Build-args:" ]
+  [ "${lines[6]}" = "  gid: 456" ]
+  [ "${lines[7]}" = "  group: concord" ]
+  [ "${lines[8]}" = "  uid: 456" ]
+  [ "${lines[9]}" = "  user: concord" ]
+  [ "${lines[10]}" = "docker build --build-arg user=concord --build-arg uid=456 --build-arg group=concord --build-arg gid=456 -f Dockerfile.distroless-java11 -t registry.vanzyl.ca/jvanzyl/concord-alpine:latest -t registry.vanzyl.ca/jvanzyl/concord-alpine:0.0.4 ." ]
+}
