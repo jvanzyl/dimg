@@ -216,19 +216,20 @@ then
      envArgs="-e ${envKey}=${envValue} ${envArgs}"
   done
 
-  command="docker run \
-    ${ports} \
-    ${mountArgs} \
-    ${network} \
-    ${host} \
-    ${envArgs} \
-    --rm ${repository}/${image}:latest"
+  if [ ! -z "${registry}" ]
+  then
+    command="docker run ${ports} ${mountArgs} ${network} ${host} ${envArgs} \
+      --rm ${registry}/${repository}/${image}:latest"
+  else
+    command="docker run ${ports} ${mountArgs} ${network} ${host} ${envArgs} \
+      --rm ${repository}/${image}:latest"
+  fi
 
-    if [ "${testMode}" == "true" ]; then
-      echo $command
-    else
-      $command
-    fi
+  if [ "${testMode}" == "true" ]; then
+    echo $command
+  else
+    $command
+  fi
 fi
 
 
@@ -254,20 +255,20 @@ then
      envArgs="-e ${envKey}=${envValue} ${envArgs}"
   done
 
-  command="docker run \
-    ${ports} \
-    ${mountArgs} \
-    ${network} \
-    ${host} \
-    ${envArgs} \
-    -it --rm ${repository}/${image}:latest \
-    ${run_shell}"
+  if [ ! -z "${registry}" ]
+  then
+    command="docker run ${ports} ${mountArgs} ${network} ${host} ${envArgs} \
+      -it --rm ${registry}/${repository}/${image}:latest ${run_shell}"
+  else
+    command="docker run ${ports} ${mountArgs} ${network} ${host} ${envArgs} \
+      -it --rm ${repository}/${image}:latest ${run_shell}"
+  fi
 
-    if [ "${testMode}" == "true" ]; then
-      echo $command
-    else
-      $command
-    fi
+  if [ "${testMode}" == "true" ]; then
+    echo $command
+  else
+    $command
+  fi
 fi
 
 if [ "${action}" == "delete"  ]

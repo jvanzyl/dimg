@@ -155,6 +155,36 @@
   [ "${lines[10]}" = "docker push registry.vanzyl.ca/jvanzyl/concord-alpine:0.0.4" ]
 }
 
+@test "Run docker container with shell using container-with-registry.yaml" {
+  run ./dimg --file container-with-registry.yaml --shell --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "registry: registry.vanzyl.ca" ]
+  [ "${lines[1]}" = "repository: jvanzyl" ]
+  [ "${lines[2]}" = "image: concord-alpine" ]
+  [ "${lines[3]}" = "version: 0.0.4" ]
+  [ "${lines[4]}" = "Build-args:" ]
+  [ "${lines[5]}" = "  gid: 456" ]
+  [ "${lines[6]}" = "  group: concord" ]
+  [ "${lines[7]}" = "  uid: 456" ]
+  [ "${lines[8]}" = "  user: concord" ]
+  [ "${lines[9]}" = "docker run -it --rm registry.vanzyl.ca/jvanzyl/concord-alpine:latest /bin/sh" ]
+}
+
+@test "Run docker container using container-with-registry.yaml" {
+  run ./dimg --file container-with-registry.yaml --run --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "registry: registry.vanzyl.ca" ]
+  [ "${lines[1]}" = "repository: jvanzyl" ]
+  [ "${lines[2]}" = "image: concord-alpine" ]
+  [ "${lines[3]}" = "version: 0.0.4" ]
+  [ "${lines[4]}" = "Build-args:" ]
+  [ "${lines[5]}" = "  gid: 456" ]
+  [ "${lines[6]}" = "  group: concord" ]
+  [ "${lines[7]}" = "  uid: 456" ]
+  [ "${lines[8]}" = "  user: concord" ]
+  [ "${lines[9]}" = "docker run --rm registry.vanzyl.ca/jvanzyl/concord-alpine:latest" ]
+}
+
 @test "Publish docker container using container-with-maven-version.yaml" {
   run ./dimg --publish --test --file container-with-maven-version.yaml
   [ "$status" -eq 0 ]
