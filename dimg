@@ -219,10 +219,10 @@ then
   if [ ! -z "${registry}" ]
   then
     command="docker run ${ports} ${mountArgs} ${network} ${host} ${envArgs} \
-      --rm ${registry}/${repository}/${image}:latest"
+      --rm ${registry}/${repository}/${image}:${version}"
   else
     command="docker run ${ports} ${mountArgs} ${network} ${host} ${envArgs} \
-      --rm ${repository}/${image}:latest"
+      --rm ${repository}/${image}:${version}"
   fi
 
   if [ "${testMode}" == "true" ]; then
@@ -258,10 +258,10 @@ then
   if [ ! -z "${registry}" ]
   then
     command="docker run ${ports} ${mountArgs} ${network} ${host} ${envArgs} \
-      -it --rm ${registry}/${repository}/${image}:latest ${run_shell}"
+      -it --rm ${registry}/${repository}/${image}:${version} ${run_shell}"
   else
     command="docker run ${ports} ${mountArgs} ${network} ${host} ${envArgs} \
-      -it --rm ${repository}/${image}:latest ${run_shell}"
+      -it --rm ${repository}/${image}:${version} ${run_shell}"
   fi
 
   if [ "${testMode}" == "true" ]; then
