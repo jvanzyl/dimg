@@ -78,7 +78,7 @@ function usage() {
 " | column -t -s ";"
 }
 
-options=$(getopt -o b:r:p:d:f --long build:,run:,publish:,delete,file: -n 'parse-options' -- "$@")
+options=$(getopt -o f:s:b:p:r:rs:d:t --long file:,show:,build:,publish:,run:,shell:,delete:,test: -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
   echo "Failed parsing options." >&2
