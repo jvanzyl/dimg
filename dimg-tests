@@ -83,6 +83,21 @@
   [ "${lines[8]}" = "docker run -p 8080:8080 --rm jvanzyl/concord-alpine:0.0.4" ]
 }
 
+@test "Run docker container using container-with-ports-multiple.yaml" {
+  run ./dimg --file container-with-ports-multiple.yaml --run --test
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "repository: jvanzyl" ]
+  [ "${lines[1]}" = "image: concord-alpine" ]
+  [ "${lines[2]}" = "version: 0.0.4" ]
+  [ "${lines[3]}" = "Build-args:" ]
+  [ "${lines[4]}" = "  gid: 456" ]
+  [ "${lines[5]}" = "  group: concord" ]
+  [ "${lines[6]}" = "  uid: 456" ]
+  [ "${lines[7]}" = "  user: concord" ]
+  [ "${lines[8]}" = "docker run -p 8080:8080 --rm jvanzyl/concord-alpine:0.0.4" ]
+}
+
+
 @test "Run docker container using container-with-network.yaml" {
   run ./dimg --file container-with-network.yaml --run --test
   [ "$status" -eq 0 ]
